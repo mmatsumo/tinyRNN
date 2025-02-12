@@ -1,11 +1,14 @@
 # cognitive_dynamics
 
-Discovering Cognitive Strategies with Tiny Recurrent Neural Networks
+This repository contains the code for the paper: 
+[Discovering Cognitive Strategies with Tiny Recurrent Neural Networks](https://www.biorxiv.org/content/10.1101/2023.04.12.536629v3)
+
+
 
 ## System requirements
-- Tested on Windows and Linux
+- Tested on Windows, Linux, and MacOS
 - Python 3
-- Python packages: pytorch, scikit-learn, numpy, scipy, pandas=1.5.3, matplotlib, joblib=1.2.0, tqdm
+- Python packages: pytorch (using cuda), scikit-learn, numpy, scipy, pandas=1.5.3, matplotlib, joblib=1.2.0, tqdm
 
 ## Installation guide
 1. Clone the repository
@@ -19,29 +22,60 @@ Discovering Cognitive Strategies with Tiny Recurrent Neural Networks
 [//]: # (Expected run time for demo)
 
 ## Instructions for use and Demo
-- Start from main.py 
-- In each experiment, the models are first trained (exp\*.py), analyzed (ana\*.py), then plotted (plotting\*.py).
-- In the training_experiments, agents are trained on some datasets.
-- In the analysis_experiments, the trained agents are analyzed using various metrics.
-- In the plotting_experiments, the results are plotted.
-- In the simulating_experiments, the trained agents are used to simulate the data.
-- Warning: Training all the experiments will require a long time, leading to around 5 million model instances.
-- Simpler demo scripts to start with:
+- The repo is structured as follows:
+```
+cognitive_dynamics
+|-- main.py (the main entry point to run the experiments)
+|-- path_settings.py (set global paths to models, results, and figures)
+|-- data_path.json (contains the paths to the data files)
+|-- agents (contains the agent and trainer classes)
+|   |-- CogAgent.py (the base class for the cognitive models)
+|   |-- CogAgentTrainer.py
+|   |-- RNNAgent.py (the base class for the RNN models)
+|   |-- RNNAgentTrainer.py
+|   |-- ...
+|-- datasets
+|   |-- BaseTwoStepDataset.py (the base class for most datasets)
+|   |-- BartoloMonkeyDayaset.py
+|   |-- ...
+|-- training_experiments
+|   |-- training.py (the core file for training all experiments)
+|   |-- exp_monkeyV.py (the file for training the monkeyV experiment)
+|   |-- exp_monkeyV_minimal.py
+|   |-- ...
+|-- analyzing_experiments (the files for analyzing the trained models)
+|   |-- analyzing.py 
+|   |-- analyzing_dynamics.py (the core file for analyzing dynamics of trained models)
+|   |-- analyzing_perf.py (the core file for analyzing performance of trained models)
+|   |-- ...
+|   |-- ana_monkey.py (the file for analyzing the monkey experiment)
+|   |-- ana_monkey_minimal.py
+|   |-- ...
+|-- plotting_experiments (the files for plotting the results)
+|   |-- plotting.py (the core file for plotting all experiments)
+|   |-- plotting_monkey.py (the file for plotting the monkey experiment)
+|   |-- plotting_monkey_minimal.py
+|   |-- ...
+|-- simulating_experiments (the files for simulating artificial data)
+|   |-- simulate_experiment.py (the core file for simulating all experiments)
+|   |-- allagents_monkey_all.py (the file for simulating the models trained on the monkey experiment) 
+|   |-- ...
+|-- tasks
+|   |-- akam_task.py (collection of two-step tasks)
+|-- utils (contains other useful functions)
+|   |-- goto_root_dir.py (go to the root directory of the project; can be called at the beginning of any script)
+
+```
+
+- For each experiment, the models are first trained on a specific dataset ("training_experiments/exp_\*.py"), 
+analyzed using various metrics ("analyzing_experiments/ana\*.py"), then plotted ("plotting_experiments/plotting\*.py").
+The models can also be used to simulate artificial data on a given task ("simulating_experiments/allagents_\*.py").
+- Warning: Training all the experiments will require a long time, leading to millions model instances.
+- Simpler demo scripts to start with (each file can either be executed directly from the console or from the main.py entry):
   - those scripts ending with "_minimal" in training_experiments: python main.py -t exp_monkeyV_minimal
   - those scripts ending with "_minimal" in analyzing_experiments: python main.py -a ana_monkey_minimal
   - those scripts ending with "_minimal" in plotting_experiments: python main.py -p plotting_monkey_minimal
-  
-## Additional notes related to settings:
-### User-specific path issues:
 
-data_path.json, containing *absolute* paths to the data files, should be created in the root directory of the project.
-
-For example, the file should look like this:
-
-{"BartoloMonkey": "D:\\p7ft2bvphx-1"}
-
-All code in the project will use (mostly) the *relative* pathstored in path_settings.py; 
-thus any scripts called by the console or the main file should from utils import goto_root_dir.
 
 
 [//]: # (### Multiprocessing issues:)
