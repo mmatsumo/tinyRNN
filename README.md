@@ -71,6 +71,7 @@ cognitive_dynamics
 analyzed using various metrics ("analyzing_experiments/ana\*.py"), then plotted ("plotting_experiments/plotting\*.py").
 The models can also be used to simulate artificial data on a given task ("simulating_experiments/allagents_\*.py").
 - Warning: Training all the experiments will require a long time, leading to millions model instances.
+- the Bartolo's Monkey dateset for the demo below, as well as other datasets, can be downloaded from the links in "data availability" section of the paper.
 - Simpler demo scripts to start with (each file can either be executed directly from the console or from the main.py entry):
   - those scripts ending with "_minimal" in training_experiments: python main.py -t exp_monkeyV_minimal
   - those scripts ending with "_minimal" in analyzing_experiments: python main.py -a ana_monkey_minimal
