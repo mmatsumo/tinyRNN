@@ -8,11 +8,11 @@ This repository contains the code for the paper:
 ## System requirements
 - Tested on Windows, Linux, and MacOS
 - Python 3
-- Python packages: pytorch (using cuda), scikit-learn, numpy, scipy, pandas=1.5.3, matplotlib, joblib=1.2.0, tqdm
+- Python packages: pytorch (using cuda), scikit-learn, numpy, scipy, statsmodels, pandas=1.5.3, matplotlib, joblib=1.2.0, tqdm
 
 ## Installation guide
 1. Clone the repository
-2. Install the required packages (few minutes; recommended to use a virtual environment like conda)
+2. Install the required packages (~ minutes; recommended to use a virtual environment like conda)
 
 
 [//]: # (Instructions to run on data)
@@ -70,9 +70,9 @@ cognitive_dynamics
 - For each experiment, the models are first trained on a specific dataset ("training_experiments/exp_\*.py"), 
 analyzed using various metrics ("analyzing_experiments/ana\*.py"), then plotted ("plotting_experiments/plotting\*.py").
 The models can also be used to simulate artificial data on a given task ("simulating_experiments/allagents_\*.py").
-- Warning: Training all the experiments will require a long time, leading to millions model instances.
+- Warning: Training all the experiments will require a long time (~ weeks on hundreds of GPUs), leading to millions model instances.
 - the Bartolo's Monkey dateset for the demo below, as well as other datasets, can be downloaded from the links in "data availability" section of the paper.
-- Simpler demo scripts to start with (each file can either be executed directly from the console or from the main.py entry):
+- Simpler demo scripts feasible on a personal computer (each file can either be executed directly from the console or from the main.py entry):
   - those scripts ending with "_minimal" in training_experiments: python main.py -t exp_monkeyV_minimal
   - those scripts ending with "_minimal" in analyzing_experiments: python main.py -a ana_monkey_minimal
   - those scripts ending with "_minimal" in plotting_experiments: python main.py -p plotting_monkey_minimal
