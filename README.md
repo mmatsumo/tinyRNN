@@ -76,6 +76,10 @@ The models can also be used to simulate artificial data on a given task ("simula
   - those scripts ending with "_minimal" in training_experiments: python main.py -t exp_monkeyV_minimal
   - those scripts ending with "_minimal" in analyzing_experiments: python main.py -a ana_monkey_minimal
   - those scripts ending with "_minimal" in plotting_experiments: python main.py -p plotting_monkey_minimal
+- To train RNNs, there are two training modes:
+  - "behavior_cv_training_job_combination" function will generate independent yaml files to submit jobs to a cluster (one job for each model) 
+  - "behavior_cv_training_config_combination" function will train all models locally
+- To train cognitive models, "behavior_cv_training_config_combination" function is used and wrapped in the block "if __name__ ==  '__main__' or '.' in __name__:" to utilize multiprocess training.
 
 
 
