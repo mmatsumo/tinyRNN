@@ -30,8 +30,8 @@ for sub in ['V',
     sim_exp_name = get_current_file_name(__file__).replace('_all', str(sub))
 
     for n_blocks, n_trials in [
-        (100, 60),
-        # (100, 100),
+        #(100, 60),
+         (100, 100),
         # (800, 500),
         ]:
         sim_config['n_blocks'] = n_blocks
@@ -51,11 +51,13 @@ for sub in ['V',
         summary_cond = lambda summary: len(summary) == 10
         iter_model_infos = [] # (model_type, additional_name, this_model_summary, summary_cond)
         for model_type in [
-            'MB0s', 'LS0',
-           'MB0', 'MB1',
-           'RC'
+            #'MB0s', 'LS0',
+           #'MB0', 
+           'MB1',
+           #'RC'
                 ]:
             iter_model_infos.append((model_type, '', cog_summary[cog_summary['cog_type'] == model_type], summary_cond))
+
         filter = lambda df: (df['readout_FC'])
         if 'finetune' in rnn_summary.columns:
             filter = lambda df: (df['readout_FC']) & (df['finetune'] == 'none')

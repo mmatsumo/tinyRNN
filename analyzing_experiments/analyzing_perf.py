@@ -44,7 +44,6 @@ def combine_exp_summary(exp_folder, id_keys=None, filter_dict=None):
     if len(combined_summary) == 0:
         print('Warning: no summary found!')
         return pd.DataFrame()
-
     combined_summary = pd.concat(combined_summary, axis=0, join='outer')
     combined_summary = combined_summary.reset_index(drop=True)
     if len(combined_summary) == 0:
@@ -57,6 +56,8 @@ def combine_exp_summary(exp_folder, id_keys=None, filter_dict=None):
                                                            axis=1)
 
     sub_combined_summary = combined_summary[id_keys].drop_duplicates(inplace=False)
+    print(sub_combined_summary.head())
+    print(combined_summary.tail())
     if len(sub_combined_summary) != len(combined_summary):
         with pd_full_print_context():
             print(id_keys)
@@ -211,8 +212,8 @@ def select_final_rnn_perf(exp_folder, additional_keys=None, verbose=True, inner_
                           include_acc=False, include_acc_filter=lambda row: True, dataset_loading_every_time=False):
     if additional_keys is None:
         additional_keys = {}
-    filter_dict = {'agent_type': 'RNN'}
-    model_identifier_keys = ['rnn_type', 'hidden_dim', 'readout_FC'] + additional_keys.setdefault('model_identifier_keys', []) # the keys to uniquely identify the model
+    filter_dict = {'agent_type': 'RNN'}#################################################################
+    model_identifier_keys = ['rnn_type', 'hidden_dim', 'readout_FC','finetune'] + additional_keys.setdefault('model_identifier_keys', []) # the keys to uniquely identify the model
     cv_keys = ['outer_fold', 'inner_fold'] + additional_keys.setdefault('cv_keys', []) # best model from inner fold and average over outer fold
     compete_from_keys = ['l1_weight', 'seed'] + additional_keys.setdefault('compete_from_keys', []) # the keys to pick the best model instance
     perf, summary = select_final_agent_perf(exp_folder, model_identifier_keys, cv_keys, compete_from_keys, filter_dict,
@@ -222,6 +223,8 @@ def select_final_rnn_perf(exp_folder, additional_keys=None, verbose=True, inner_
         new_rnn_type = '+'.join(combine_model_then_select['rnn_type'])
         perf['rnn_type'] = new_rnn_type
         summary['rnn_type'] = new_rnn_type
+   
+ 
     if sort_keys is not None:
         #assert sort_keys[0] == 'block' # only support block for now
         idx = 0
@@ -371,7 +374,8 @@ def find_best_models_for_exp(exp_folder, cog_agent_type, additional_rnn_keys=Non
     ana_exp_path = ANA_SAVE_PATH / exp_folder
     os.makedirs(ana_exp_path, exist_ok=True)
     if has_rnn:
-        for combine_model_then_select in [None]:#, {'rnn_type': ['GRU', 'SGRU'], 'finetune':[True, False, 'none']}]:
+        #for combine_model_then_select in [{'rnn_type': ['GRU', 'SGRU'], 'finetune':[True, False, 'none']}]:###
+        for combine_model_then_select in [None]:#, {'rnn_type': ['GRU', 'SGRU'], 'finetune':[True, False, 'none']}]:###
             temp = select_final_rnn_perf(exp_folder, additional_keys=additional_rnn_keys, inner_fold_perf_key=inner_fold_perf_key,
                                                                         return_dim_est=return_dim_est,
                                          combine_model_then_select=combine_model_then_select,sort_keys=rnn_sort_keys, include_acc=include_acc, include_acc_filter=include_acc_filter,
@@ -604,3 +608,149 @@ def compile_perf_for_exps(exp_folders, compile_exp_folder, additional_rnn_keys={
 
         joblib.dump(df, ana_exp_path / f'rnn_final_perf_est_dim{lambda_filter_name}.pkl')
 
+
+
+def find_best_models_for_exp_finetuned(exp_folder, cog_agent_type, additional_rnn_keys=None, additional_cog_keys=None,
+                             rnn_sort_keys=None, cog_sort_keys=None, has_rnn=True, has_cog=True, cog_hidden_dim=None, return_dim_est=True, check_missing=True,
+                             include_acc=False, include_acc_filter=lambda row: True, dataset_loading_every_time=False, model_based = None):
+    goto_root_dir.run()
+    if check_missing:
+        check_missing_models(exp_folder)
+
+    # for inner_fold_perf_key in ['trainval_loss', #'test_loss']:
+    inner_fold_perf_key = 'trainval_loss'
+    if inner_fold_perf_key == 'trainval_loss':
+        fname = ''
+    else:
+        fname = '_based_on_test'
+    print('========Select best models based on inner_fold_perf_key:', inner_fold_perf_key,'exp_folder:', exp_folder)
+    ana_exp_path = ANA_SAVE_PATH / exp_folder
+    os.makedirs(ana_exp_path, exist_ok=True)
+    if has_rnn:
+        #for combine_model_then_select in [{'rnn_type': ['GRU', 'SGRU'], 'finetune':[True, False, 'none']}]:###
+        for combine_model_then_select in [None]:###
+            temp = select_final_rnn_perf_f(exp_folder, additional_keys=additional_rnn_keys, inner_fold_perf_key=inner_fold_perf_key,
+                                                                        return_dim_est=return_dim_est,
+                                         combine_model_then_select=combine_model_then_select,sort_keys=rnn_sort_keys, include_acc=include_acc, include_acc_filter=include_acc_filter,
+                                         dataset_loading_every_time=dataset_loading_every_time, model_based = model_based)
+            if return_dim_est:
+                rnn_perf, rnn_summary, perf_est_dim = temp
+            else:
+                rnn_perf, rnn_summary = temp
+                perf_est_dim = None
+            fname_temp = fname
+            if combine_model_then_select is not None:
+                fname_temp += '_combine_then_select'
+            joblib.dump(rnn_perf, ana_exp_path / f'rnn_final_perf{fname_temp}.pkl')
+            joblib.dump(rnn_summary, ana_exp_path / f'rnn_final_best_summary{fname_temp}.pkl')
+            joblib.dump(perf_est_dim, ana_exp_path / f'rnn_final_perf_est_dim{fname_temp}.pkl')
+            # also save csv
+            rnn_perf.to_csv(ana_exp_path / f'rnn_final_perf{fname_temp}.csv')
+            rnn_summary.to_csv(ana_exp_path / f'rnn_final_best_summary{fname_temp}.csv')
+            if perf_est_dim is not None:
+                perf_est_dim.to_csv(ana_exp_path / f'rnn_final_perf_est_dim{fname_temp}.csv')
+    else:
+        pass
+        # below will overwrite the previous results
+        # empty_pd = pd.DataFrame()
+        # joblib.dump(empty_pd, ana_exp_path / f'rnn_final_perf{fname}.pkl')
+        # joblib.dump(empty_pd, ana_exp_path / f'rnn_final_best_summary{fname}.pkl')
+
+    if has_cog:
+        cog_perf, cog_summary = select_final_cog_perf(exp_folder, cog_agent_type, additional_keys=additional_cog_keys, inner_fold_perf_key=inner_fold_perf_key,
+                                                      cog_hidden_dim=cog_hidden_dim, sort_keys=cog_sort_keys, include_acc=include_acc, include_acc_filter=include_acc_filter,
+                                                      dataset_loading_every_time=dataset_loading_every_time)
+        joblib.dump(cog_perf, ana_exp_path / f'cog_final_perf{fname}.pkl')
+        joblib.dump(cog_summary, ana_exp_path / f'cog_final_best_summary{fname}.pkl')
+    else:
+        pass
+        # below will overwrite the previous results
+        # empty_pd = pd.DataFrame()
+        # joblib.dump(empty_pd, ana_exp_path / f'cog_final_perf{fname}.pkl')
+        # joblib.dump(empty_pd, ana_exp_path / f'cog_final_best_summary{fname}.pkl')
+
+
+
+def select_final_rnn_perf_f(exp_folder, additional_keys=None, verbose=True, inner_fold_perf_key='trainval_loss', return_dim_est=False, combine_model_then_select=None,sort_keys=None,
+                          include_acc=False, include_acc_filter=lambda row: True, dataset_loading_every_time=False,model_based = None):
+    if additional_keys is None:
+        additional_keys = {}
+    filter_dict = {'agent_type': 'RNN'}#################################################################
+    model_identifier_keys = ['rnn_type', 'hidden_dim', 'readout_FC','model_based'] + additional_keys.setdefault('model_identifier_keys', []) # the keys to uniquely identify the model
+    cv_keys = ['outer_fold', 'inner_fold'] + additional_keys.setdefault('cv_keys', []) # best model from inner fold and average over outer fold
+    compete_from_keys = ['l1_weight', 'seed'] + additional_keys.setdefault('compete_from_keys', []) # the keys to pick the best model instance
+    perf, summary = select_final_agent_perf(exp_folder, model_identifier_keys, cv_keys, compete_from_keys, filter_dict,
+                                            inner_fold_perf_key=inner_fold_perf_key, filter_dict_for_summary=combine_model_then_select,include_acc=include_acc, include_acc_filter=include_acc_filter,
+                                            dataset_loading_every_time=dataset_loading_every_time)
+    if combine_model_then_select is not None:
+        new_rnn_type = '+'.join(combine_model_then_select['model_based'])
+        perf['model_based'] = new_rnn_type
+        summary['rnn_type'] = new_rnn_type
+   
+ 
+    if sort_keys is not None:
+        #assert sort_keys[0] == 'block' # only support block for now
+        idx = 0
+        for k in sort_keys:
+            perf.insert(idx, k, perf.pop(k))
+            summary.insert(idx, k, summary.pop(k))
+            idx += 1
+        # change none to -1
+        if 'block' in perf.columns:
+            perf['block'] = perf['block'].apply(lambda x: -1 if x == 'none' else x)
+            summary['block'] = summary['block'].apply(lambda x: -1 if x == 'none' else x)
+        perf = perf.sort_values(by=sort_keys)
+        summary = summary.sort_values(by=sort_keys)
+
+
+    perf.insert(1, 'test_loss', perf.pop('test_loss'))
+    perf.insert(2, 'trainval_loss', perf.pop('trainval_loss'))
+    perf.insert(3, 'train_loss', perf.pop('train_loss'))
+    perf.insert(4, 'val_loss', perf.pop('val_loss'))
+    if include_acc:
+        perf.insert(5, 'test_acc', perf.pop('test_acc'))
+        perf.insert(6, 'trainval_acc', perf.pop('trainval_acc'))
+        perf.insert(7, 'train_acc', perf.pop('train_acc'))
+        perf.insert(8, 'val_acc', perf.pop('val_acc'))
+    if verbose:
+        with pd_full_print_context():
+            print(perf)
+    from scipy.stats import ttest_rel
+    def estimate_dimensionality(perf, verbose=True, ttest=True):
+        perf_gru = perf[perf['readout_FC'] == True].reset_index(drop=True)
+        # given a hidden dimension, select the best model with the lowest test loss (from GRU/SGRU/PNR1)
+        perf_gru = select_best_models_by_keys(perf_gru, group_by_keys=['hidden_dim'], perf_key='test_loss', select_func='min')
+
+        perf_gru['less_pvalue'] = [np.zeros(len(perf_gru)) for _ in range(len(perf_gru))]
+        perf_gru['less_than_former'] = [1 for _ in range(len(perf_gru))]
+        for i, i_row in perf_gru.iterrows():
+            L = i_row['agg_outer_fold']
+            assert all(L[i] < L[i+1] for i in range(len(L) - 1)), L # make sure the outer fold number is in order
+            for j, j_row in perf_gru.iterrows():
+                if ttest:
+                    pvalue = ttest_rel(i_row['agg_test_loss'], j_row['agg_test_loss'], alternative='less').pvalue
+                else:
+                    pvalue = 1 - (np.mean(i_row['agg_test_loss']) < np.mean(j_row['agg_test_loss'])) # 0 if i is less than j
+                perf_gru.loc[i, 'less_pvalue'][j] = pvalue
+                if j<i and pvalue > 0.05:
+                    perf_gru.loc[i, 'less_than_former'] = 0
+        if verbose:
+            with pd_full_print_context():
+                print('Estimated dimensionality:')
+                if 'rnn_type' in perf_gru.columns:
+                    col_list = ['block'] if 'block' in perf_gru.columns else []
+                    col_list += ['rnn_type', 'hidden_dim', 'less_than_former', 'test_loss', 'less_pvalue']
+                    print(perf_gru[col_list])
+        return perf_gru
+
+
+    if 'block' not in perf.columns: # when the same folder has one subject
+        perf_gru = estimate_dimensionality(perf, verbose=verbose)
+    else:
+        perf_gru = []
+        for block in perf['block'].unique():
+            perf_gru.append(estimate_dimensionality(perf[perf['block'] == block], verbose=verbose, ttest=False))
+        perf_gru = pd.concat(perf_gru, axis=0, join='outer')
+    if return_dim_est:
+        return perf, summary, perf_gru
+    return perf, summary

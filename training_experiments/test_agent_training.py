@@ -17,7 +17,7 @@ base_config = {
       'input_dim': 3, # input dimension
       'hidden_dim': 2, # dimension of this rnn layer
       'output_dim': 2, # dimension of action
-      'device': 'cuda', # mostly cpu
+      'device': 'cpu', # mostly cpu
       'output_h0': True, # whether initial hidden state included in loss
       'trainable_h0': False, # the agent's initial hidden state trainable or not
       'readout_FC': True, # whether the readout layer is full connected or not

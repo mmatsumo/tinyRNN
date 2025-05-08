@@ -130,7 +130,16 @@ class RNNAgentTrainer(RNNAgent):
             batch_size = 0
         if 'finetune' in self.config and self.config['finetune']:
             print('Finetune from the previous saved model...')
-            self.load()
+            if self.config['model_based'] == '100_pre_trained':
+                mp = 'exp_finetuned_monkeyV/agent_name-MB1_seed0.rnn_type-GRU.hidden_dim-2.model_based-sintetic.trainval_percent-100/outerfold0_innerfold0_seed0'
+            elif self.config['model_based'] ==  '70_pre_trained':
+                mp = 'exp_finetuned_monkeyV/agent_name-MB1_seed0.rnn_type-GRU.hidden_dim-2.model_based-sintetic.trainval_percent-70/outerfold0_innerfold0_seed0'
+            elif self.config['model_based'] ==  '50_pre_trained':
+                mp = 'exp_finetuned_monkeyV/agent_name-MB1_seed0.rnn_type-GRU.hidden_dim-2.model_based-sintetic.trainval_percent-50/outerfold0_innerfold0_seed0'
+            elif self.config['model_based'] ==  '20_pre_trained':
+                mp = 'exp_finetuned_monkeyV/agent_name-MB1_seed0.rnn_type-GRU.hidden_dim-2.model_based-sintetic.trainval_percent-20/outerfold0_innerfold0_seed0'
+
+            self.load(model_path=mp)
         self.use_amp = self.config.get('use_amp', False)
         if self.use_amp:
             print('Using AMP for training.')

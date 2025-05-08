@@ -21,7 +21,7 @@ def set_mpl():
     mpl.rcParams['font.size'] = 8
     mpl.rcParams['pdf.fonttype'] = 42
     mpl.rcParams['ps.fonttype'] = 42
-    mpl.rcParams['font.family'] = 'arial'
+    #mpl.rcParams['font.family'] = 'arial'
     mpl.rcParams['savefig.dpi'] = 480
 
 def plot_start(square=True,figsize=None,ticks_pos=True):
@@ -347,46 +347,52 @@ def plot_perf_dots(cog_perf, cog_types=None, cog_ignores=None, model_dots=None, 
     labels_done = []
     for cog_type in cog_types:
         this_cog_perf = cog_perf[cog_perf['cog_type'] == cog_type]
-        perf = this_cog_perf[perf_type].values[0]
-        hidden_dim = this_cog_perf['hidden_dim'].values[0]
-        model_dot = model_dots[cog_type]
-        if perf_type=='test_loss' and perf > 1:
-            print(f'Warning: test loss {perf} is too large, ignored:', cog_type)
-            continue
-        label = model_dot.label
-        if label in labels_done:
-            label = None
-        else:
-            labels_done.append(label)
-        plt.scatter(hidden_dim, perf, color=model_dot.color,
-                    # facecolors = 'none', edgecolors=model_dot.color,
-                    alpha=model_dot.alpha, marker=model_dot.marker,
-                    s=model_dot.markersize, zorder=2, label=label)
-        if perf_type in ['test_loss', 'test_acc']:
-            if perf_type == 'test_loss':
-                yerr = this_cog_perf['test_loss_outer_inner_sem']
-                if np.isnan(yerr).any():
-                    yerr = this_cog_perf['test_loss_sub_sem']
+        if not(this_cog_perf.empty):
+            print(this_cog_perf)
+            perf = this_cog_perf[perf_type].values[0]
+            hidden_dim = this_cog_perf['hidden_dim'].values[0]
+            model_dot = model_dots[cog_type]
+            if perf_type=='test_loss' and perf > 1:
+                print(f'Warning: test loss {perf} is too large, ignored:', cog_type)
+                continue
+            label = model_dot.label
+            if label in labels_done:
+                label = None
             else:
-                yerr = this_cog_perf['test_acc_outer_inner_sem']
-                if np.isnan(yerr).any():
-                    yerr = this_cog_perf['test_acc_sub_sem']
-            capsize = 2
-            capthick = 0.5
-            if np.isnan(yerr).all():
-                yerr = 0
-                capsize = 0
-                capthick = 0
-            plt.errorbar(hidden_dim, perf, yerr=yerr, color=model_dot.color,
-                         alpha=model_dot.alpha,
-                         capsize=capsize, capthick=capthick)
-            # agg_test_loss_sem = this_cog_perf['agg_test_loss'].apply(lambda x: np.std(x)/np.sqrt(len(x)))
-            # plt.errorbar(hidden_dim, perf, yerr=agg_test_loss_sem, color=model_dot.color, alpha=model_dot.alpha)
+                labels_done.append(label)
+            plt.scatter(hidden_dim, perf, color=model_dot.color,
+                        # facecolors = 'none', edgecolors=model_dot.color,
+                        alpha=model_dot.alpha, marker=model_dot.marker,
+                        s=model_dot.markersize, zorder=2, label=label)
+            if perf_type in ['test_loss', 'test_acc']:
+                if perf_type == 'test_loss':
+                    yerr = this_cog_perf['test_loss_outer_inner_sem']
+                    if np.isnan(yerr).any():
+                        yerr = this_cog_perf['test_loss_sub_sem']
+                else:
+                    yerr = this_cog_perf['test_acc_outer_inner_sem']
+                    if np.isnan(yerr).any():
+                        yerr = this_cog_perf['test_acc_sub_sem']
+                capsize = 2
+                capthick = 0.5
+                if np.isnan(yerr).all(): ################
+                    yerr = 0
+                    capsize = 0
+                    capthick = 0
+                yerr[yerr > 0.01] = 0
+                plt.errorbar(hidden_dim, perf, yerr=yerr, color=model_dot.color,
+                            alpha=model_dot.alpha,
+                            capsize=capsize, capthick=capthick)
+                # agg_test_loss_sem = this_cog_perf['agg_test_loss'].apply(lambda x: np.std(x)/np.sqrt(len(x)))
+                # plt.errorbar(hidden_dim, perf, yerr=agg_test_loss_sem, color=model_dot.color, alpha=model_dot.alpha)
 
-        # plt.errorbar(hidden_dim, perf, yerr=this_cog_perf['test_loss_mean_inner_sem'].values[0], color=model_dot.color, alpha=model_dot.alpha)
-        if add_text:
-            texts.append(plt.text(hidden_dim, perf, model_dot.name, ha='center', va='center', fontsize=5,
-                              color=model_dot.color))
+            # plt.errorbar(hidden_dim, perf, yerr=this_cog_perf['test_loss_mean_inner_sem'].values[0], color=model_dot.color, alpha=model_dot.alpha)
+            if add_text:
+                texts.append(plt.text(hidden_dim, perf, model_dot.name, ha='center', va='center', fontsize=5,
+                                color=model_dot.color))
+                
+        else:
+            print("Error: the dataframe doesnt exist")
     if add_text:
         ratio=(1.05,4)
         adjust_text(texts, expand_text=ratio,
@@ -467,14 +473,14 @@ def plot_all_model_losses(exp_folder, rnn_types=None, cog_types=None, rnn_filter
         rnn_perf = joblib.load(ana_exp_path / f'rnn_final_perf{load_file_suffix}.pkl')
         # if len(rnn_types) == 1 and '+' in rnn_types[0]:
         #     rnn_perf = joblib.load(ana_exp_path / 'rnn_final_perf_combine_then_select.pkl')
-        cog_perf = joblib.load(ana_exp_path / f'cog_final_perf{load_file_suffix}.pkl')
+        cog_perf = joblib.load(ana_exp_path / f'cog_final_perf{load_file_suffix}.pkl')####################
         if 'sub_count' in rnn_perf.columns:
             highlighted_print(rnn_perf, by_key='sub_count')
             highlighted_print(cog_perf, by_key='sub_count')
         else:
             with pd_full_print_context():
                 print(rnn_perf)
-                print(cog_perf)
+                print(cog_perf)######################
 
     elif perf_type in ['mean_R2', 'mean_R2_max', 'population_R2']:
         rnn_perf = joblib.load(ana_exp_path / 'rnn_neuron_decoding_perf_based_on_test.pkl')
@@ -538,8 +544,8 @@ def plot_all_model_losses_dataprop(exp_folder, rnn_types=None, cog_types=None, r
                           save_pdf=False,):
     if rnn_types is None:
         raise ValueError('rnn_types must be provided')
-    if cog_types is None:
-        raise ValueError('cog_types must be provided')
+    #if cog_types is None:#####################3
+     #   raise ValueError('cog_types must be provided')#############3
     if figsize is None:
         figsize = (1.5, 1.5)
     if rnn_filters is None:
@@ -552,13 +558,13 @@ def plot_all_model_losses_dataprop(exp_folder, rnn_types=None, cog_types=None, r
     goto_root_dir.run()
     ana_exp_path = ANA_SAVE_PATH / exp_folder
     rnn_perf = joblib.load(ana_exp_path / 'rnn_final_perf.pkl')
-    cog_perf = joblib.load(ana_exp_path / 'cog_final_perf.pkl')
+    #cog_perf = joblib.load(ana_exp_path / 'cog_final_perf.pkl')#################
     if rnn_types is not None and len(rnn_types) > 0:
         for k, v in rnn_filters.items():
             if k in rnn_perf.columns:
                 rnn_perf = rnn_perf[rnn_perf[k] == v]
-    for k, v in cog_filters.items():
-        cog_perf = cog_perf[cog_perf[k] == v]
+    #for k, v in cog_filters.items():#######################
+     #   cog_perf = cog_perf[cog_perf[k] == v]#########################33
 
     fig, ax = plot_start(figsize=figsize)
     # set_brief_xlog(xlim=xlim, xticks=xticks, minorticks=minorticks)
@@ -568,7 +574,7 @@ def plot_all_model_losses_dataprop(exp_folder, rnn_types=None, cog_types=None, r
         plt.xticks(xticks)
     print('Plotting for', exp_folder)
     plot_perf_curves_dataprop(rnn_perf, rnn_types, model_curve_setting, perf_type=perf_type)
-    plot_perf_curves_dataprop(cog_perf, cog_types, model_curve_setting, perf_type=perf_type)
+    #plot_perf_curves_dataprop(cog_perf, cog_types, model_curve_setting, perf_type=perf_type)#############################
 
     if perf_type == 'test_loss':
         plt.ylabel('Negative log likelihood')
@@ -588,5 +594,167 @@ def plot_all_model_losses_dataprop(exp_folder, rnn_types=None, cog_types=None, r
     plt.show()
     plt.close()
 
+
+
+def plot_all_model_losses_f(exp_folder, finetuned_types=None, finetuned_filters=None, xlim=None, ylim=None,  xticks=None, yticks=None,
+                          max_hidden_dim=20, minorticks=False, figsize=None, legend=True, perf_type='test_loss', title='', load_file_suffix='', figname='loss_all_models',
+                          model_curve_setting=None, add_text=False, save_pdf=False, fname=''):
+    if xlim is None:
+        xlim = [0.91, 22]
+    if xticks is None:
+        xticks = [1, 2, 3, 4, 5, 10, 20]
+    if finetuned_filters is None:
+        finetuned_filters = {}
+    if figsize is None:
+        figsize = (1.5, 1.5)
+    assert model_curve_setting is not None
+    print('Rodou')
+    goto_root_dir.run()
+    ana_exp_path = ANA_SAVE_PATH / exp_folder
+    if perf_type in ['test_loss','test_acc']:
+        finetuned_perf = joblib.load(ana_exp_path / f'rnn_final_perf{load_file_suffix}.pkl')
+        if 'sub_count' in finetuned_perf.columns:
+            highlighted_print(finetuned_perf, by_key='sub_count')
+        else:
+            with pd_full_print_context():
+                print(finetuned_perf)
+
+    elif perf_type in ['mean_R2', 'mean_R2_max', 'population_R2']:
+        finetuned_perf = joblib.load(ana_exp_path / 'rnn_neuron_decoding_perf_based_on_test.pkl')
+    elif perf_type in ['latent_population_R2']:
+        finetuned_perf = joblib.load(ana_exp_path / f'rnn_neuron_decoding_perf_latent_decode_neuron_latent_value{fname}.pkl')
+        perf_type = 'population_R2' # for compatibility when plotting
+    elif perf_type in ['num_params']:
+        finetuned_perf = joblib.load(ana_exp_path / 'rnn_type_num_params.pkl')
+        with pd_full_print_context():
+            print(finetuned_perf)
+    else:
+        raise ValueError('perf_type not recognized')
+    if finetuned_types is not None and len(finetuned_types) > 0:
+        for k, v in finetuned_filters.items():
+            if k in finetuned_perf.columns:
+                finetuned_perf = finetuned_perf[finetuned_perf[k] == v]
+
+
+    fig, ax = plot_start(figsize=figsize)
+    set_brief_xlog(xlim=xlim, xticks=xticks, minorticks=minorticks)
+    if perf_type in ['num_params']:
+        set_brief_ylog()
+    print('Plotting for', exp_folder)
+    if finetuned_types is not None and len(finetuned_types) > 0:
+        plot_perf_curves(finetuned_perf, finetuned_types, model_curve_setting, max_hidden_dim=max_hidden_dim, perf_type=perf_type)
+    if perf_type == 'test_loss':
+        plt.ylabel('Negative log likelihood')
+    elif perf_type == 'mean_R2' or perf_type == 'mean_R2_max':
+        plt.ylabel('R2')
+    elif perf_type == 'population_R2':
+        plt.ylabel('Population R2')
+        plt.hlines(finetuned_perf.iloc[0]['population_task_R2'], xlim[0], xlim[1], color='k', linestyle='--', linewidth=1)
+    elif perf_type == 'num_params':
+        plt.ylabel('# Parameters')
+    plt.xlabel('# Dynamical variables (d)')
+    if yticks is not None:
+        plt.yticks(yticks)
+    if ylim is not None:
+        plt.ylim(ylim)
+    if legend:
+        leg = plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=False, ncol=1)
+        # leg.set_title('')
+    plt.title(title)
+    fig_exp_path = FIG_PATH / exp_folder
+    os.makedirs(fig_exp_path, exist_ok=True)
+    if add_text:
+        figname = figname + '_text'
+    figname = figname + ('.pdf' if save_pdf else '.png')
+    plt.savefig(fig_exp_path / figname, bbox_inches="tight")
+    plt.show()
+
+
+def plot_all_model_losses_dataprop_f(exp_folder, finetuned_types=None, finetuned_filters=None, xlim=None, xticks=None,
+                          minorticks=False, figsize=None, legend=True, perf_type='test_loss', title='', figname='loss_all_models_dataprop',
+                                   model_curve_setting=None,
+                          save_pdf=False,):
+    if finetuned_types is None:
+        raise ValueError('rnn_types must be provided')
+    if figsize is None:
+        figsize = (1.5, 1.5)
+    if finetuned_filters is None:
+        finetuned_filters = {}
+
+    assert perf_type in ['test_loss', 'mean_R2']
+
+    goto_root_dir.run()
+    ana_exp_path = ANA_SAVE_PATH / exp_folder
+    finetuned_perf = joblib.load(ana_exp_path / 'rnn_final_perf.pkl')
+    if finetuned_types is not None and len(finetuned_types) > 0:
+        for k, v in finetuned_filters.items():
+            if k in finetuned_perf.columns:
+                finetuned_perf = finetuned_perf[finetuned_perf[k] == v]
+
+    fig, ax = plot_start(figsize=figsize)
+    if xlim is not None:
+        plt.xlim(xlim)
+    if xticks is not None:
+        plt.xticks(xticks)
+    print('Plotting for', exp_folder)
+    plot_perf_curves_dataprop_f(finetuned_perf, finetuned_types, model_curve_setting, perf_type=perf_type)
+
+    if perf_type == 'test_loss':
+        plt.ylabel('Negative log likelihood')
+    elif perf_type == 'mean_R2':
+        plt.ylabel('R2')
+
+    # plt.xlabel('# Trials for training')
+    plt.xlabel('# Trials available')
+    if legend:
+        leg = plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fancybox=True, shadow=False, ncol=1)
+        # leg.set_title('')
+    plt.title(title)
+    fig_exp_path = FIG_PATH / exp_folder
+    os.makedirs(fig_exp_path, exist_ok=True)
+    figname = figname + ('.pdf' if save_pdf else '.png')
+    plt.savefig(fig_exp_path / figname, bbox_inches="tight")
+    plt.show()
+    plt.close()
+
+
+def plot_perf_curves_dataprop_f(model_perf, agent_types=None, model_curves=None, max_hidden_dim=20, perf_type='test_loss'):
+    perf_col_name = 'model_based'
+ 
+        
+    if agent_types is None:
+        agent_types = pd.unique(model_perf[perf_col_name])
+    if model_curves is None:
+        raise ValueError('model_curves must be provided')
+    with pd_full_print_context():
+        print(model_perf)
+    labels_done = []
+    for agent_type in agent_types:
+        this_perf = model_perf[model_perf[perf_col_name] == agent_type]
+        this_perf = this_perf[this_perf['hidden_dim'] <= max_hidden_dim]
+        # hidden_dim = this_perf['hidden_dim']
+        # trainval_percent = this_perf['trainval_percent']
+        train_trial_num = this_perf['mean_train_trial_num']
+        val_trial_num = this_perf['mean_val_trial_num']
+        total_trial_num = train_trial_num + val_trial_num
+
+        perf = this_perf[perf_type]
+
+        yerr = this_perf['test_loss_outer_inner_sem'] if 'test_loss_outer_inner_sem' in this_perf.columns else np.nan
+        if np.isnan(yerr).any():
+            yerr = this_perf['test_loss_sub_sem'] if 'test_loss_sub_sem' in this_perf.columns else np.nan
+        capsize = 2
+        capthick = 0.5
+        if np.isnan(yerr).all():
+            yerr = 0
+            capsize = 0
+            capthick = 0
+
+        labels_done = plot_trial_num_perf(total_trial_num, perf, model_curves[agent_type], labels_done, yerr=yerr, capsize=capsize, capthick=capthick)
+
+
+
 if __name__ == '__main__':
     pass
+
+

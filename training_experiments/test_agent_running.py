@@ -41,7 +41,7 @@ if __name__ ==  '__main__' or '.' in __name__:
             'hidden_dim': 2,
             'output_dim': 2,
             'expand_size': 10,
-            'device': 'cuda', #'cpu',
+            'device': 'cpu', #'cpu',
             'trainable_h0': False,
             'readout_FC': True,
             'one_hot': False,
